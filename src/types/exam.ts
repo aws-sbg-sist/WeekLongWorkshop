@@ -28,8 +28,8 @@ export interface Question {
 
 export interface ClientQuestion {
   id: number;
-  domain: QuestionDomain;
-  topic: string;
+  domain?: QuestionDomain;
+  topic?: string;
   questionType: QuestionType;
   multipleResponseCount?: number;
   question: string;

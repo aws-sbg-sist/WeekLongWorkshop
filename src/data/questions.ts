@@ -1269,8 +1269,6 @@ export const CLF_C02_QUESTIONS: Question[] = [
 export function getClientQuestions(): import("@/types/exam").ClientQuestion[] {
   return CLF_C02_QUESTIONS.map((q) => ({
     id: q.id,
-    domain: q.domain,
-    topic: q.topic,
     questionType: q.questionType,
     multipleResponseCount: q.multipleResponseCount,
     question: q.question,

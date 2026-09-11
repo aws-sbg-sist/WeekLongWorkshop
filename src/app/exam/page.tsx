@@ -436,11 +436,9 @@ export default function ExamScreen() {
           {/* Question Metadata Row */}
           <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded bg-aws-card border border-aws-border text-aws-muted font-medium">
-                {currentQ.domain}
+              <span className="px-2.5 py-1 rounded bg-aws-card border border-aws-border text-aws-muted font-semibold tracking-wide">
+                Question {currentIndex + 1} of {questions.length}
               </span>
-              <span className="text-aws-subtle hidden sm:inline">•</span>
-              <span className="text-aws-subtle hidden sm:inline">{currentQ.topic}</span>
             </div>
 
             {/* Type indicator */}
