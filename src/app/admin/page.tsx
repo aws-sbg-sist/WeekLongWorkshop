@@ -192,6 +192,19 @@ export default function AdminPage() {
   // Quick Action Toggles
   const handleUpdateExam = async (updates: Record<string, any>) => {
     const token = sessionStorage.getItem("admin_token") || "";
+
+    // Optimistically update UI immediately
+    setOverview((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        config: {
+          ...prev.config,
+          ...updates,
+        },
+      };
+    });
+
     try {
       const res = await fetch("/api/admin/control", {
         method: "POST",
@@ -206,11 +219,14 @@ export default function AdminPage() {
         fetchData();
       } else {
         alert(`Failed: ${data.error}`);
+        fetchData();
       }
     } catch (err: any) {
       alert(`Network error: ${err.message}`);
+      fetchData();
     }
   };
+
 
   // Bulk import participants
   const handleBulkImport = async (e: React.FormEvent) => {

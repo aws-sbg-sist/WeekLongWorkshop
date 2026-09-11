@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 import { DatabaseStore } from "./types";
 import {
   ExamAttempt,
@@ -9,8 +10,14 @@ import {
 } from "@/types/exam";
 import { calculateExamScore } from "../scoring";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const isServerless = Boolean(
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+);
+const DATA_DIR = isServerless
+  ? path.join(os.tmpdir(), "aws_mock_exam_data")
+  : path.join(process.cwd(), ".data");
 const STORE_FILE = path.join(DATA_DIR, "exam_store.json");
+
 
 const DEFAULT_CONFIG: ExamConfig = {
   id: "clf-c02-exam",

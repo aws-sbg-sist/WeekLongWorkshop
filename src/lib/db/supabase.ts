@@ -75,6 +75,12 @@ export const supabaseStore = {
   async updateConfig(updates: Partial<ExamConfig>): Promise<ExamConfig> {
     const supabase = getClient();
     const payload: Record<string, any> = {
+      id: "clf-c02-exam",
+      name: "AWS Cloud Practitioner Week Long Workshop",
+      exam_title: "AWS Certified Cloud Practitioner — CLF-C02 Mock Examination",
+      institution: "Sathyabama Institute of Science and Technology, Chennai",
+      duration_minutes: 90,
+      total_questions: 65,
       updated_at: new Date().toISOString(),
     };
 
@@ -94,14 +100,17 @@ export const supabaseStore = {
 
     const { data, error } = await supabase
       .from("exams")
-      .update(payload)
-      .eq("id", "clf-c02-exam")
+      .upsert(payload, { onConflict: "id" })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase updateConfig error:", error);
+      throw error;
+    }
     return mapExamConfig(data);
   },
+
 
   async getParticipants(): Promise<Participant[]> {
     const supabase = getClient();
