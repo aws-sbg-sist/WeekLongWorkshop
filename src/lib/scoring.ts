@@ -34,10 +34,23 @@ export function calculateExamScore(
     domainMap.get(q.domain)!.total += 1;
   }
 
+  const safeAnswers = answers || {};
+
   // Grade each question
   for (const q of CLF_C02_QUESTIONS) {
-    const selected = answers[q.id];
-    const isAnswered = Array.isArray(selected) && selected.length > 0;
+    const rawSelected: any =
+      safeAnswers[q.id] ?? (safeAnswers as any)[String(q.id)];
+
+    let selected: string[] = [];
+    if (Array.isArray(rawSelected)) {
+      selected = rawSelected.filter(
+        (s) => s != null && String(s).trim().length > 0
+      );
+    } else if (typeof rawSelected === "string" && rawSelected.trim().length > 0) {
+      selected = [rawSelected.trim()];
+    }
+
+    const isAnswered = selected.length > 0;
 
     if (isAnswered) {
       answeredCount++;
@@ -46,9 +59,16 @@ export function calculateExamScore(
     let isCorrect = false;
 
     if (isAnswered) {
-      const sortedSelected = [...selected].sort().join(",");
-      const sortedCorrect = [...q.correctAnswer].sort().join(",");
-      if (sortedSelected === sortedCorrect) {
+      const normalizedSelected = Array.from(
+        new Set(selected.map((s) => String(s).trim().toUpperCase()))
+      )
+        .sort()
+        .join(",");
+      const sortedCorrect = [...q.correctAnswer]
+        .map((s) => String(s).trim().toUpperCase())
+        .sort()
+        .join(",");
+      if (normalizedSelected === sortedCorrect) {
         isCorrect = true;
       }
     }
@@ -63,9 +83,12 @@ export function calculateExamScore(
   }
 
   const score = correctCount;
-  const percentage = Number(((score / totalQuestions) * 100).toFixed(2));
+  const percentage =
+    totalQuestions > 0
+      ? Number(((score / totalQuestions) * 100).toFixed(2))
+      : 0;
   const unansweredCount = totalQuestions - answeredCount;
-  const incorrectCount = answeredCount - correctCount;
+  const incorrectCount = Math.max(0, answeredCount - correctCount);
 
   // Domain score array
   const domainScores: DomainScore[] = Array.from(domainMap.entries()).map(

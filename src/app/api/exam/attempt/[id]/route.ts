@@ -33,9 +33,21 @@ export async function GET(
     // Only expose answers & explanations if admin enabled answerReviewEnabled
     if (config.answerReviewEnabled && attempt.submittedAt) {
       reviewItems = CLF_C02_QUESTIONS.map((q) => {
-        const selected = attempt.answers[q.id] || [];
-        const isCorrect =
-          [...selected].sort().join(",") === [...q.correctAnswer].sort().join(",");
+        const rawSelected =
+          attempt.answers[q.id] ?? (attempt.answers as any)[String(q.id)] ?? [];
+        const selected = Array.isArray(rawSelected)
+          ? rawSelected
+          : [rawSelected].filter(Boolean);
+        const normalizedSelected = Array.from(
+          new Set(selected.map((s) => String(s).trim().toUpperCase()))
+        )
+          .sort()
+          .join(",");
+        const sortedCorrect = [...q.correctAnswer]
+          .map((s) => String(s).trim().toUpperCase())
+          .sort()
+          .join(",");
+        const isCorrect = normalizedSelected === sortedCorrect;
         return {
           ...q,
           selectedAnswer: selected,
@@ -50,6 +62,11 @@ export async function GET(
     else if (attempt.percentage >= 70) performanceTier = "Strong";
     else if (attempt.percentage >= 55) performanceTier = "Good";
     else performanceTier = "Needs Improvement";
+
+    const answeredCount = CLF_C02_QUESTIONS.filter((q) => {
+      const raw = attempt.answers[q.id] ?? (attempt.answers as any)[String(q.id)];
+      return Array.isArray(raw) ? raw.length > 0 : Boolean(raw);
+    }).length;
 
     return NextResponse.json({
       success: true,
@@ -66,9 +83,7 @@ export async function GET(
         percentage: attempt.percentage,
         timeUsedSeconds: attempt.timeUsedSeconds,
         domainScores: attempt.domainScores || [],
-        answeredCount: Object.keys(attempt.answers).filter(
-          (k) => (attempt.answers[Number(k)] || []).length > 0
-        ).length,
+        answeredCount,
         performanceTier,
       },
       answerReviewEnabled: config.answerReviewEnabled,
