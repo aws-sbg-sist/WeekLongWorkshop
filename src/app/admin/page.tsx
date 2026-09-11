@@ -151,6 +151,7 @@ export default function AdminPage() {
           "Cache-Control": "no-cache",
         },
         cache: "no-store",
+        credentials: "include",
       });
       if (overviewRes.status === 401) {
         handleLogout();
@@ -176,6 +177,7 @@ export default function AdminPage() {
           "Cache-Control": "no-cache",
         },
         cache: "no-store",
+        credentials: "include",
       });
       const partJson = await partRes.json();
       if (partJson.success) {
@@ -222,6 +224,7 @@ export default function AdminPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify(updates),
       });
       const data = await res.json();
@@ -265,6 +268,7 @@ export default function AdminPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ names }),
       });
       const data = await res.json();
@@ -300,6 +304,7 @@ export default function AdminPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ confirmation: resetConfirmText }),
       });
       const data = await res.json();
