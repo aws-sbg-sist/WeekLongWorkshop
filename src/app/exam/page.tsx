@@ -308,6 +308,26 @@ export default function ExamScreen() {
     handleFinalSubmit(true);
   };
 
+  // 5. Detect if coordinator ends the examination session live
+  useEffect(() => {
+    if (!attemptId || loading || submitting) return;
+
+    const checkEnded = async () => {
+      try {
+        const res = await fetch(`/api/exam/public-info?_t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (data?.config?.status === "ended") {
+          handleFinalSubmit(true);
+        }
+      } catch {}
+    };
+
+    const interval = setInterval(checkEnded, 6000);
+    return () => clearInterval(interval);
+  }, [attemptId, loading, submitting]);
+
   // Format seconds into MM:SS
   const formatTime = (totalSeconds: number) => {
     const minutes = Math.floor(totalSeconds / 60);

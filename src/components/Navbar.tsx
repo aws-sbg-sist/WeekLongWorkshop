@@ -12,7 +12,9 @@ export default function Navbar() {
   useEffect(() => {
     async function fetchStatus() {
       try {
-        const res = await fetch("/api/exam/public-info");
+        const res = await fetch(`/api/exam/public-info?_t=${Date.now()}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (data?.config?.status) {
           setExamStatus(data.config.status);
@@ -22,7 +24,7 @@ export default function Navbar() {
       }
     }
     fetchStatus();
-    const interval = setInterval(fetchStatus, 30000);
+    const interval = setInterval(fetchStatus, 6000);
     return () => clearInterval(interval);
   }, []);
 
@@ -63,15 +65,23 @@ export default function Navbar() {
                     ? "bg-emerald-400 animate-pulse"
                     : examStatus === "upcoming"
                     ? "bg-amber-400"
-                    : "bg-aws-muted"
+                    : "bg-rose-500"
                 }`}
               />
-              <span className="uppercase text-[11px] tracking-wider text-aws-muted">
+              <span
+                className={`uppercase text-[11px] tracking-wider font-semibold ${
+                  examStatus === "live"
+                    ? "text-emerald-400"
+                    : examStatus === "upcoming"
+                    ? "text-amber-400"
+                    : "text-rose-400"
+                }`}
+              >
                 {examStatus === "live"
                   ? "LIVE EXAM"
                   : examStatus === "upcoming"
                   ? "UPCOMING"
-                  : "CONCLUDED"}
+                  : "EXAM ENDED"}
               </span>
             </div>
 

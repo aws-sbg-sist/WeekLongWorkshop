@@ -14,6 +14,7 @@ import {
   Layers,
   Sparkles,
   Calendar,
+  Trophy,
 } from "lucide-react";
 
 interface PublicInfo {
@@ -48,7 +49,9 @@ export default function LandingPage() {
   useEffect(() => {
     async function loadInfo() {
       try {
-        const res = await fetch("/api/exam/public-info");
+        const res = await fetch(`/api/exam/public-info?_t=${Date.now()}`, {
+          cache: "no-store",
+        });
         const data = await res.json();
         if (data.success) {
           setInfo(data);
@@ -60,6 +63,8 @@ export default function LandingPage() {
       }
     }
     loadInfo();
+    const interval = setInterval(loadInfo, 6000);
+    return () => clearInterval(interval);
   }, []);
 
   // Countdown timer calculation if status is upcoming
@@ -244,20 +249,50 @@ export default function LandingPage() {
           </div>
         )}
 
-        {/* Form */}
         {status === "ended" ? (
-          <div className="text-center py-6 space-y-4">
-            <p className="text-sm text-aws-muted">
-              The scheduled examination session has ended. You can view the final
-              results on the public leaderboard.
-            </p>
-            <button
-              onClick={() => router.push("/leaderboard")}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-aws-orange text-black font-semibold text-sm hover:bg-aws-orangeHover transition-all shadow-lg"
-            >
-              <span>View Leaderboard</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+          <div className="py-2 space-y-6">
+            <div className="text-center space-y-2">
+              <div className="w-12 h-12 rounded-full bg-rose-500/10 border border-rose-500/30 text-rose-400 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-lg font-bold text-white">Examination Session Concluded</h3>
+              <p className="text-xs text-aws-muted max-w-md mx-auto">
+                The mock test session is officially closed. You can view the live leaderboard or retrieve your personal scorecard below.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => router.push("/leaderboard")}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-aws-orange text-black font-bold text-xs sm:text-sm hover:bg-aws-orangeHover transition-all shadow-lg"
+              >
+                <Trophy className="w-4 h-4" />
+                <span>View Public Leaderboard</span>
+              </button>
+            </div>
+
+            <div className="pt-4 border-t border-aws-border">
+              <span className="text-xs font-semibold text-aws-muted uppercase tracking-wider block mb-2">
+                Already Completed? Look Up Your Scorecard
+              </span>
+              <form onSubmit={handleEnterExam} className="flex flex-col sm:flex-row gap-2">
+                <input
+                  type="text"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your registered full name"
+                  className="flex-1 px-4 py-3 rounded-xl bg-aws-squid border border-aws-border text-white text-xs sm:text-sm placeholder:text-aws-subtle focus:outline-none focus:ring-2 focus:ring-aws-orange"
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-5 py-3 rounded-xl bg-aws-card hover:bg-aws-cardHover border border-aws-border text-white text-xs sm:text-sm font-bold transition-colors disabled:opacity-50"
+                >
+                  {loading ? "Checking..." : "View Scorecard"}
+                </button>
+              </form>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleEnterExam} className="space-y-5">

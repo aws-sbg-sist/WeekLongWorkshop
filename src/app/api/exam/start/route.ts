@@ -34,18 +34,36 @@ export async function POST(req: NextRequest) {
     const config = await db.getConfig();
     const isDemo = process.env.DEMO_MODE === "true";
 
+    // 1. Check if participant already has a submitted attempt
+    const existingAttempt = await db.getAttemptByParticipantName(cleanName);
+    if (existingAttempt) {
+      if (
+        existingAttempt.status === "submitted" ||
+        existingAttempt.status === "auto_submitted"
+      ) {
+        return NextResponse.json({
+          success: true,
+          alreadySubmitted: true,
+          attemptId: existingAttempt.id,
+          message: "This examination attempt has already been submitted.",
+        });
+      }
+    }
+
+    // 2. If no submitted attempt and exam is ended, block entry
     if (config.status === "ended" && !isDemo) {
       return NextResponse.json(
-        { success: false, error: "The examination has ended." },
+        { success: false, error: "The examination session has ended. New attempts are no longer accepted." },
         { status: 403 }
       );
     }
 
+    // 3. If exam is upcoming, block entry
     if (config.status === "upcoming" && !isDemo) {
       return NextResponse.json(
         {
           success: false,
-          error: "The examination has not started yet.",
+          error: "The examination has not started yet. Please wait for the scheduled start time.",
           startTime: config.startTime,
         },
         { status: 403 }
@@ -55,19 +73,10 @@ export async function POST(req: NextRequest) {
     // Register or fetch participant
     const participant = await db.createParticipant(cleanName);
 
-    // Check existing attempt
-    let attempt = await db.getAttemptByParticipantName(cleanName);
+    // Check existing in-progress attempt or create new one
+    let attempt = existingAttempt;
 
     if (attempt) {
-      if (attempt.status === "submitted" || attempt.status === "auto_submitted") {
-        return NextResponse.json({
-          success: true,
-          alreadySubmitted: true,
-          attemptId: attempt.id,
-          message: "This examination attempt has already been submitted.",
-        });
-      }
-
       // In-progress attempt: calculate time remaining
       const startedMs = new Date(attempt.startedAt).getTime();
       const elapsedSec = Math.floor((Date.now() - startedMs) / 1000);

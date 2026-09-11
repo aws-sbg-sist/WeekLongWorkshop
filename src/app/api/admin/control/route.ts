@@ -36,6 +36,22 @@ export async function POST(req: NextRequest) {
 
     const updatedConfig = await db.updateConfig(updates);
 
+    if (updates.status === "ended") {
+      try {
+        const attempts = await db.getAllAttempts();
+        const inProgress = attempts.filter((a) => a.status === "in_progress");
+        for (const att of inProgress) {
+          try {
+            await db.submitAttempt(att.id, att.answers || {}, true);
+          } catch (err) {
+            console.warn(`Failed to auto-submit attempt ${att.id}:`, err);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to auto-submit in-progress attempts on exam end:", err);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: "Exam settings updated successfully.",

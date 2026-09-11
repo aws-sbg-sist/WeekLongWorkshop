@@ -18,6 +18,7 @@ export default function InstructionsPage() {
   const [name, setName] = useState<string>("");
   const [attemptId, setAttemptId] = useState<string>("");
   const [agreed, setAgreed] = useState(false);
+  const [examStatus, setExamStatus] = useState<string>("live");
 
   useEffect(() => {
     const savedName = sessionStorage.getItem("participant_name");
@@ -32,6 +33,22 @@ export default function InstructionsPage() {
     if (savedAttempt) {
       setAttemptId(savedAttempt);
     }
+
+    // Check exam status
+    async function checkStatus() {
+      try {
+        const res = await fetch(`/api/exam/public-info?_t=${Date.now()}`, {
+          cache: "no-store",
+        });
+        const data = await res.json();
+        if (data?.config?.status) {
+          setExamStatus(data.config.status);
+        }
+      } catch {}
+    }
+    checkStatus();
+    const interval = setInterval(checkStatus, 6000);
+    return () => clearInterval(interval);
   }, [router]);
 
   const handleStartExam = () => {
@@ -140,34 +157,69 @@ export default function InstructionsPage() {
           </div>
         </div>
 
-        {/* Candidate agreement confirmation checkbox */}
-        <div className="pt-2">
-          <label className="flex items-start gap-3 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="w-4 h-4 mt-1 rounded border-aws-border bg-aws-squid text-aws-orange focus:ring-aws-orange focus:ring-offset-aws-dark"
-            />
-            <span className="text-xs text-aws-muted leading-relaxed">
-              I confirm that I am taking this practice mock examination on my own
-              device and agree to submit my responses within the allotted 90-minute
-              timeframe.
-            </span>
-          </label>
-        </div>
+        {/* Candidate agreement confirmation checkbox & CTA Button */}
+        {examStatus === "ended" ? (
+          <div className="pt-2 space-y-4">
+            <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm text-center">
+              The examination session has concluded. New test attempts are no longer accepted.
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={() => router.push("/leaderboard")}
+                className="flex-1 py-3.5 px-6 rounded-xl bg-aws-orange hover:bg-aws-orangeHover text-black font-bold text-sm transition-all shadow-lg text-center"
+              >
+                View Public Leaderboard
+              </button>
+              <button
+                onClick={() => router.push("/")}
+                className="py-3.5 px-6 rounded-xl bg-aws-card hover:bg-aws-cardHover border border-aws-border text-white font-semibold text-sm transition-all text-center"
+              >
+                Return to Home
+              </button>
+            </div>
+          </div>
+        ) : examStatus === "upcoming" ? (
+          <div className="pt-2 space-y-4">
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm text-center">
+              The examination is scheduled and has not started yet. Please wait for the workshop coordinator to begin the test.
+            </div>
+            <button
+              disabled
+              className="w-full py-4 px-6 rounded-xl bg-aws-card border border-aws-border text-aws-muted font-bold text-sm opacity-50 cursor-not-allowed text-center"
+            >
+              Waiting for Coordinator to Start Exam...
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="w-4 h-4 mt-1 rounded border-aws-border bg-aws-squid text-aws-orange focus:ring-aws-orange focus:ring-offset-aws-dark"
+                />
+                <span className="text-xs text-aws-muted leading-relaxed">
+                  I confirm that I am taking this practice mock examination on my own
+                  device and agree to submit my responses within the allotted 90-minute
+                  timeframe.
+                </span>
+              </label>
+            </div>
 
-        {/* CTA Button */}
-        <div className="pt-2">
-          <button
-            onClick={handleStartExam}
-            disabled={!agreed}
-            className="w-full py-4 px-6 rounded-xl bg-aws-orange hover:bg-aws-orangeHover text-black font-bold text-sm sm:text-base transition-all duration-200 shadow-xl shadow-aws-orange/20 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed group"
-          >
-            <Play className="w-4 h-4 fill-black" />
-            <span>Start Examination</span>
-          </button>
-        </div>
+            <div className="pt-2">
+              <button
+                onClick={handleStartExam}
+                disabled={!agreed}
+                className="w-full py-4 px-6 rounded-xl bg-aws-orange hover:bg-aws-orangeHover text-black font-bold text-sm sm:text-base transition-all duration-200 shadow-xl shadow-aws-orange/20 flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                <Play className="w-4 h-4 fill-black" />
+                <span>Start Examination</span>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
