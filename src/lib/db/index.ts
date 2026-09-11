@@ -1,4 +1,5 @@
 import { jsonStore } from "./json-store";
+import { isSupabaseConfigured, supabaseStore } from "./supabase";
 import {
   ExamAttempt,
   ExamConfig,
@@ -6,48 +7,55 @@ import {
   Participant,
 } from "@/types/exam";
 
+function getStore() {
+  if (isSupabaseConfigured()) {
+    return supabaseStore;
+  }
+  return jsonStore;
+}
+
 // Unified DB interface
 export const db = {
   async getConfig(): Promise<ExamConfig> {
-    return jsonStore.getConfig();
+    return getStore().getConfig();
   },
 
   async updateConfig(updates: Partial<ExamConfig>): Promise<ExamConfig> {
-    return jsonStore.updateConfig(updates);
+    return getStore().updateConfig(updates);
   },
 
   async getParticipants(): Promise<Participant[]> {
-    return jsonStore.getParticipants();
+    return getStore().getParticipants();
   },
 
   async createParticipant(name: string): Promise<Participant> {
-    return jsonStore.createParticipant(name);
+    return getStore().createParticipant(name);
   },
 
   async bulkImportParticipants(names: string[]): Promise<number> {
-    return jsonStore.bulkImportParticipants(names);
+    return getStore().bulkImportParticipants(names);
   },
 
   async getAttemptByParticipantName(name: string): Promise<ExamAttempt | null> {
-    return jsonStore.getAttemptByParticipantName(name);
+    return getStore().getAttemptByParticipantName(name);
   },
 
   async getAttemptById(attemptId: string): Promise<ExamAttempt | null> {
-    return jsonStore.getAttemptById(attemptId);
+    return getStore().getAttemptById(attemptId);
   },
 
   async createAttempt(
     participantId: string,
     participantName: string
   ): Promise<ExamAttempt> {
-    return jsonStore.createAttempt(participantId, participantName);
+    return getStore().createAttempt(participantId, participantName);
   },
 
   async saveProgress(
     attemptId: string,
     answers: Record<number, string[]>
   ): Promise<ExamAttempt> {
-    return jsonStore.saveProgress(attemptId, answers);
+    return getStore().saveProgress(attemptId, answers);
   },
 
   async submitAttempt(
@@ -55,18 +63,18 @@ export const db = {
     answers: Record<number, string[]>,
     isAuto = false
   ): Promise<ExamAttempt> {
-    return jsonStore.submitAttempt(attemptId, answers, isAuto);
+    return getStore().submitAttempt(attemptId, answers, isAuto);
   },
 
   async getAllAttempts(): Promise<ExamAttempt[]> {
-    return jsonStore.getAllAttempts();
+    return getStore().getAllAttempts();
   },
 
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
-    return jsonStore.getLeaderboard();
+    return getStore().getLeaderboard();
   },
 
   async resetExamData(): Promise<void> {
-    return jsonStore.resetExamData();
+    return getStore().resetExamData();
   },
 };
