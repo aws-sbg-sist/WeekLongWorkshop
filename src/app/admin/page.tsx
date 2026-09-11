@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 
 interface AdminOverview {
+  isSupabaseConnected?: boolean;
   config: {
     id: string;
     name: string;
@@ -143,9 +144,13 @@ export default function AdminPage() {
     try {
       const token = sessionStorage.getItem("admin_token") || "";
 
-      // 1. Overview
-      const overviewRes = await fetch("/api/admin/overview", {
-        headers: { Authorization: `Bearer ${token}` },
+      // 1. Overview with cache busting
+      const overviewRes = await fetch(`/api/admin/overview?_t=${Date.now()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
       });
       if (overviewRes.status === 401) {
         handleLogout();
@@ -162,10 +167,15 @@ export default function AdminPage() {
         status: statusFilter,
         sortBy,
         sortOrder,
+        _t: String(Date.now()),
       });
 
       const partRes = await fetch(`/api/admin/participants?${qParams}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Cache-Control": "no-cache",
+        },
+        cache: "no-store",
       });
       const partJson = await partRes.json();
       if (partJson.success) {
@@ -216,14 +226,17 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.success) {
-        fetchData();
+        if (data.config) {
+          setOverview((prev) => (prev ? { ...prev, config: data.config } : prev));
+        }
+        await fetchData();
       } else {
-        alert(`Failed: ${data.error}`);
-        fetchData();
+        alert(`Failed to update settings: ${data.error || "Unknown server error"}`);
+        await fetchData();
       }
     } catch (err: any) {
       alert(`Network error: ${err.message}`);
-      fetchData();
+      await fetchData();
     }
   };
 
@@ -389,11 +402,22 @@ export default function AdminPage() {
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-aws-border">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-aws-orange/15 text-aws-orange border border-aws-orange/30">
               Coordinator Suite
             </span>
             <span className="text-xs text-aws-subtle">• Sathyabama Institute</span>
+            {overview?.isSupabaseConnected ? (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Supabase Connected
+              </span>
+            ) : (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Ephemeral Store (Add Supabase env in Vercel)
+              </span>
+            )}
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white mt-1">
             Exam Control & Live Monitoring

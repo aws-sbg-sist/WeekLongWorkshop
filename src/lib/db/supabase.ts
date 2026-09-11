@@ -12,17 +12,29 @@ const supabaseKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(supabaseUrl && supabaseKey);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return Boolean(url && key);
 }
 
 let client: SupabaseClient | null = null;
 
 function getClient(): SupabaseClient {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error("Supabase credentials are not configured in environment.");
+  }
   if (!client) {
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Supabase credentials are not configured in environment.");
-    }
-    client = createClient(supabaseUrl, supabaseKey);
+    client = createClient(url, key, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
   }
   return client;
 }
@@ -38,7 +50,7 @@ export const supabaseStore = {
 
     if (error) {
       console.error("Supabase getConfig error:", error);
-      throw error;
+      throw new Error(`Supabase getConfig failed: ${error.message}`);
     }
 
     if (!data) {
@@ -48,7 +60,7 @@ export const supabaseStore = {
         name: "AWS Cloud Practitioner Week Long Workshop",
         exam_title: "AWS Certified Cloud Practitioner — CLF-C02 Mock Examination",
         institution: "Sathyabama Institute of Science and Technology, Chennai",
-        status: "live",
+        status: "upcoming",
         start_time: new Date().toISOString(),
         end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         duration_minutes: 90,
@@ -65,7 +77,10 @@ export const supabaseStore = {
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (insertError) {
+        console.error("Supabase insertConfig error:", insertError);
+        throw new Error(`Supabase insertConfig failed: ${insertError.message}`);
+      }
       return mapExamConfig(inserted);
     }
 
@@ -75,12 +90,6 @@ export const supabaseStore = {
   async updateConfig(updates: Partial<ExamConfig>): Promise<ExamConfig> {
     const supabase = getClient();
     const payload: Record<string, any> = {
-      id: "clf-c02-exam",
-      name: "AWS Cloud Practitioner Week Long Workshop",
-      exam_title: "AWS Certified Cloud Practitioner — CLF-C02 Mock Examination",
-      institution: "Sathyabama Institute of Science and Technology, Chennai",
-      duration_minutes: 90,
-      total_questions: 65,
       updated_at: new Date().toISOString(),
     };
 
@@ -100,15 +109,49 @@ export const supabaseStore = {
 
     const { data, error } = await supabase
       .from("exams")
-      .upsert(payload, { onConflict: "id" })
-      .select()
-      .single();
+      .update(payload)
+      .eq("id", "clf-c02-exam")
+      .select();
 
     if (error) {
       console.error("Supabase updateConfig error:", error);
-      throw error;
+      throw new Error(`Supabase updateConfig failed: ${error.message}`);
     }
-    return mapExamConfig(data);
+
+    if (data && data.length > 0) {
+      return mapExamConfig(data[0]);
+    }
+
+    // If row doesn't exist yet, insert with defaults
+    const fullPayload = {
+      id: "clf-c02-exam",
+      name: "AWS Cloud Practitioner Week Long Workshop",
+      exam_title: "AWS Certified Cloud Practitioner — CLF-C02 Mock Examination",
+      institution: "Sathyabama Institute of Science and Technology, Chennai",
+      status: updates.status || "upcoming",
+      start_time: updates.startTime || new Date().toISOString(),
+      end_time: updates.endTime || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      duration_minutes: updates.durationMinutes || 90,
+      total_questions: 65,
+      expected_participants: updates.expectedParticipants || 100,
+      leaderboard_enabled: updates.leaderboardEnabled ?? false,
+      results_enabled: updates.resultsEnabled ?? true,
+      answer_review_enabled: updates.answerReviewEnabled ?? false,
+      ...payload,
+    };
+
+    const { data: inserted, error: insertError } = await supabase
+      .from("exams")
+      .upsert(fullPayload, { onConflict: "id" })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error("Supabase insertConfig error:", insertError);
+      throw new Error(`Supabase insertConfig failed: ${insertError.message}`);
+    }
+
+    return mapExamConfig(inserted);
   },
 
 

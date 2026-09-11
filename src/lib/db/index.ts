@@ -28,8 +28,9 @@ export const db = {
           await jsonStore.updateConfig(updates);
         } catch {}
         return res;
-      } catch (err) {
-        console.warn("Supabase updateConfig fallback to jsonStore:", err);
+      } catch (err: any) {
+        console.error("Supabase updateConfig failed:", err);
+        throw err;
       }
     }
     return jsonStore.updateConfig(updates);

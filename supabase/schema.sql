@@ -53,7 +53,17 @@ CREATE INDEX IF NOT EXISTS idx_attempts_participant_name ON attempts(LOWER(parti
 CREATE INDEX IF NOT EXISTS idx_attempts_status ON attempts(status);
 CREATE INDEX IF NOT EXISTS idx_attempts_leaderboard ON attempts(score DESC, time_used_seconds ASC);
 
--- 5. Seed Initial Default Exam Record
+-- 5. Disable Row Level Security (RLS) & Grant Permissions
+-- This ensures serverless API routes on Vercel can seamlessly read & write
+ALTER TABLE IF EXISTS exams DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS participants DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS attempts DISABLE ROW LEVEL SECURITY;
+
+GRANT ALL ON TABLE exams TO anon, authenticated, service_role;
+GRANT ALL ON TABLE participants TO anon, authenticated, service_role;
+GRANT ALL ON TABLE attempts TO anon, authenticated, service_role;
+
+-- 6. Seed Initial Default Exam Record
 INSERT INTO exams (
   id,
   name,
@@ -79,3 +89,4 @@ INSERT INTO exams (
   true,
   false
 ) ON CONFLICT (id) DO NOTHING;
+

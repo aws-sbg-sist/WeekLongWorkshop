@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
+import { isSupabaseConfigured } from "@/lib/db/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -43,21 +44,29 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      config,
-      kpis: {
-        expectedParticipants,
-        currentParticipantsCount,
-        inProgressCount,
-        submittedCount,
-        notStartedCount,
-        averageScore,
-        highestScore,
-        lowestScore,
-        completionPercentage,
+    return NextResponse.json(
+      {
+        success: true,
+        config,
+        isSupabaseConnected: isSupabaseConfigured(),
+        kpis: {
+          expectedParticipants,
+          currentParticipantsCount,
+          inProgressCount,
+          submittedCount,
+          notStartedCount,
+          averageScore,
+          highestScore,
+          lowestScore,
+          completionPercentage,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err.message || "Failed to load overview." },
