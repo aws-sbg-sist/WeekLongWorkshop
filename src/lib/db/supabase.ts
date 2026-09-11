@@ -187,13 +187,14 @@ export const supabaseStore = {
       .from("participants")
       .select("*")
       .ilike("name", cleanName)
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    if (existing) {
+    if (existing && existing.length > 0) {
       return {
-        id: existing.id,
-        name: existing.name,
-        createdAt: existing.created_at,
+        id: existing[0].id,
+        name: existing[0].name,
+        createdAt: existing[0].created_at,
       };
     }
 
@@ -227,9 +228,9 @@ export const supabaseStore = {
           .from("participants")
           .select("id")
           .ilike("name", cleanName)
-          .maybeSingle();
+          .limit(1);
 
-        if (!existing) {
+        if (!existing || existing.length === 0) {
           const newId = `p_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
           await supabase.from("participants").insert({
             id: newId,
@@ -251,10 +252,11 @@ export const supabaseStore = {
       .from("attempts")
       .select("*")
       .ilike("participant_name", cleanName)
-      .maybeSingle();
+      .order("started_at", { ascending: false })
+      .limit(1);
 
-    if (error || !data) return null;
-    return mapExamAttempt(data);
+    if (error || !data || data.length === 0) return null;
+    return mapExamAttempt(data[0]);
   },
 
   async getAttemptById(attemptId: string): Promise<ExamAttempt | null> {
@@ -263,10 +265,10 @@ export const supabaseStore = {
       .from("attempts")
       .select("*")
       .eq("id", attemptId)
-      .maybeSingle();
+      .limit(1);
 
-    if (error || !data) return null;
-    return mapExamAttempt(data);
+    if (error || !data || data.length === 0) return null;
+    return mapExamAttempt(data[0]);
   },
 
   async createAttempt(
@@ -413,7 +415,7 @@ export const supabaseStore = {
     await supabase.from("attempts").delete().neq("id", "none");
     await supabase.from("participants").delete().neq("id", "none");
     await supabase.from("exams").update({
-      status: "live",
+      status: "upcoming",
       leaderboard_enabled: false,
       results_enabled: true,
       answer_review_enabled: false,

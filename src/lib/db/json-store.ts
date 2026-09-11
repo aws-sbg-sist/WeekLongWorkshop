@@ -24,7 +24,7 @@ const DEFAULT_CONFIG: ExamConfig = {
   name: "AWS Cloud Practitioner Week Long Workshop",
   examTitle: "AWS Certified Cloud Practitioner — CLF-C02 Mock Examination",
   institution: "Sathyabama Institute of Science and Technology, Chennai",
-  status: "live",
+  status: "upcoming",
   startTime: new Date().toISOString(),
   endTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   durationMinutes: 90,

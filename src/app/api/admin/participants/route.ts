@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
+import { CLF_C02_QUESTIONS } from "@/data/questions";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -43,9 +44,10 @@ export async function GET(req: NextRequest) {
         startedAt: att ? att.startedAt : null,
         submittedAt: att ? att.submittedAt : null,
         answeredCount: att
-          ? Object.keys(att.answers || {}).filter(
-              (k) => (att.answers[Number(k)] || []).length > 0
-            ).length
+          ? CLF_C02_QUESTIONS.filter((q) => {
+              const raw = att.answers[q.id] ?? (att.answers as any)[String(q.id)];
+              return Array.isArray(raw) ? raw.length > 0 : Boolean(raw);
+            }).length
           : 0,
       };
     });
@@ -67,9 +69,10 @@ export async function GET(req: NextRequest) {
           timeUsedSeconds: att.timeUsedSeconds,
           startedAt: att.startedAt,
           submittedAt: att.submittedAt,
-          answeredCount: Object.keys(att.answers || {}).filter(
-            (k) => (att.answers[Number(k)] || []).length > 0
-          ).length,
+          answeredCount: CLF_C02_QUESTIONS.filter((q) => {
+            const raw = att.answers[q.id] ?? (att.answers as any)[String(q.id)];
+            return Array.isArray(raw) ? raw.length > 0 : Boolean(raw);
+          }).length,
         });
       }
     }

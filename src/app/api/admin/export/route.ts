@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminAuth } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
+import { CLF_C02_QUESTIONS } from "@/data/questions";
 
 export const dynamic = "force-dynamic";
 
@@ -45,9 +46,10 @@ export async function GET(req: NextRequest) {
       const score = att.score;
       const percentage = `${att.percentage}%`;
       const correct = att.score;
-      const answeredCount = Object.keys(att.answers || {}).filter(
-        (k) => (att.answers[Number(k)] || []).length > 0
-      ).length;
+      const answeredCount = CLF_C02_QUESTIONS.filter((q) => {
+        const raw = att.answers[q.id] ?? (att.answers as any)[String(q.id)];
+        return Array.isArray(raw) ? raw.length > 0 : Boolean(raw);
+      }).length;
       const incorrect = Math.max(0, answeredCount - correct);
       const unanswered = Math.max(0, 65 - answeredCount);
 

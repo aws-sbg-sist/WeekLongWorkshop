@@ -41,8 +41,11 @@ export async function GET(req: NextRequest) {
       averageScore = Number((totalScore / submittedCount).toFixed(1));
       highestScore = Math.max(...scores);
       lowestScore = Math.min(...scores);
-      completionPercentage = Number(
-        ((submittedCount / (currentParticipantsCount || 1)) * 100).toFixed(1)
+      completionPercentage = Math.min(
+        100,
+        Number(
+          ((submittedCount / Math.max(currentParticipantsCount, submittedCount, 1)) * 100).toFixed(1)
+        )
       );
     }
 

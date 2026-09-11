@@ -40,6 +40,8 @@ export default function ExamScreen() {
   // 90-minute countdown timer (in seconds)
   const [timeRemaining, setTimeRemaining] = useState<number>(90 * 60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const answersRef = useRef<Record<number, string[]>>({});
+  answersRef.current = answers;
 
   // Modals & Drawers
   const [isNavigatorOpen, setIsNavigatorOpen] = useState(false);
@@ -280,10 +282,15 @@ export default function ExamScreen() {
       // Clear beforeunload handler
       window.onbeforeunload = null;
 
+      const submissionAnswers =
+        answersRef.current && Object.keys(answersRef.current).length > 0
+          ? answersRef.current
+          : answers;
+
       const res = await fetch("/api/exam/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ attemptId, answers, isAuto }),
+        body: JSON.stringify({ attemptId, answers: submissionAnswers, isAuto }),
       });
 
       const data = await res.json();
@@ -340,8 +347,8 @@ export default function ExamScreen() {
   // Derived metrics
   const currentQ = questions[currentIndex];
   const totalCount = questions.length || 65;
-  const answeredCount = Object.keys(answers).filter(
-    (k) => (answers[Number(k)] || []).length > 0
+  const answeredCount = questions.filter(
+    (q) => (answers[q.id] || []).length > 0
   ).length;
   const unansweredCount = totalCount - answeredCount;
   const markedCount = markedForReview.size;

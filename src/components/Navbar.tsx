@@ -7,7 +7,7 @@ import { Cloud, Trophy, Shield, Activity } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [examStatus, setExamStatus] = useState<string>("live");
+  const [examStatus, setExamStatus] = useState<string>("upcoming");
 
   useEffect(() => {
     async function fetchStatus() {
