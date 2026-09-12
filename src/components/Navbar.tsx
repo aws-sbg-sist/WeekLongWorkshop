@@ -7,9 +7,13 @@ import { Cloud, Trophy, Shield, Activity } from "lucide-react";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const isExamView = pathname.startsWith("/exam");
   const [examStatus, setExamStatus] = useState<string>("upcoming");
 
   useEffect(() => {
+    // Inside exam view, the exam screen handles its own status check
+    if (isExamView) return;
+
     async function fetchStatus() {
       try {
         const res = await fetch(`/api/exam/public-info?_t=${Date.now()}`, {
@@ -24,12 +28,9 @@ export default function Navbar() {
       }
     }
     fetchStatus();
-    const interval = setInterval(fetchStatus, 6000);
+    const interval = setInterval(fetchStatus, 8000);
     return () => clearInterval(interval);
-  }, []);
-
-  // In the exam view, show a focused exam header
-  const isExamView = pathname.startsWith("/exam");
+  }, [isExamView]);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-aws-border bg-aws-squid/90 backdrop-blur-md">
